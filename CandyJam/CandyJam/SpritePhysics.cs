@@ -1,16 +1,20 @@
 ﻿/*
 	File:			SpritePhysics.cs
-	Version:		1.0
+	Version:		1.1
 	Last altered:	29/01/2014.
 	Authors:		James MacGilp.
+    Extends:        Sprite.cs 
+ 
 
-	Description:	- Used to animate graphics via spritesheets. 
+	Description:	- Used to apply basic physics to a sprite object. 
 	
-					- There are functions for both looped and single animations, both of which take a graphic to be animated, 
-					  a rate at which to animate, and which animation to be played.
+					- Physics(int) and CalculateGroundLevel(List<Rectangle>) should be used in conjunction, passing a list of collidable geometry as a list of rectangles to return a groundlevel.
+                    - It's important to remember to include the base (floor) groundlevel as a rectangle.
 					
-					- The function for a single animation returns a boolean, which is true if the animation is complete, 
-					  and false if it is not.
+					- The functions Jump() and DropDown() are used to initiate a jump, or for the sprite to drop from the current groundlevel.
+                    - It's important to NOT call DropDown() when the sprite is on the base (floor) groundlevel.
+  
+                    - This class should be extended by more specific classes.
  */
 
 using System;
@@ -51,7 +55,7 @@ namespace CandyJam
             else
             {
                 velocity.Y = 0.0f;
-                MoveTo(rect.Left, groundLevel - rect.Height - 1);
+                MoveTo(rect.Left, (groundLevel - rect.Height) - 1);
                 grounded = true;
             }
         }

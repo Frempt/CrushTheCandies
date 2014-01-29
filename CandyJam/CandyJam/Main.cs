@@ -92,11 +92,35 @@ namespace CandyJam
         {
         }
 
-        protected override void Update(GameTime gameTime)
+        protected void UpdateWave()
         {
-            //set the statically accessable time last frame took to complete
-            DeltaTime = gameTime.ElapsedGameTime;
+            //wave based logic
+            if (player.GetEnemiesKilled() > (enemyTarget * wave))
+            {
+                wave++;
+                waveDelayTimer = waveDelay;
+                player.ResetEnemiesKilled();
+                pickup = new Sprite(TextureLibrary.pickupTexture);
+                pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) + (pickup.GetRect().Width / 2), (GraphicsDevice.Viewport.Height / 2) + (pickup.GetRect().Height / 2));
+            }
 
+            if (waveDelayTimer == 0.0f)
+            {
+                enemies = EnemySpawner.Update(enemies, GraphicsDevice.Viewport, wave);
+            }
+            else
+            {
+                waveDelayTimer -= Main.DeltaTime.Milliseconds;
+
+                if (waveDelayTimer <= 0.0f)
+                {
+                    waveDelayTimer = 0.0f;
+                }
+            }
+        }
+
+        protected void Controls()
+        {
             //controls
             KeyboardState key = Keyboard.GetState();
             MouseState mouse = Mouse.GetState();
@@ -113,27 +137,27 @@ namespace CandyJam
                 player.Jump();
             }
 
-            if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel -1)
+            if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel - 1)
             {
                 player.DropDown();
             }
 
             //set the animation state back to idle
-            if (player.GetAnimationState() == Player.AnimationState.RUNNING)
+            if (player.GetAnimationState() == Player.PlayerAnimationState.RUNNING)
             {
-                player.SetAnimationState(Player.AnimationState.IDLE);
+                player.SetAnimationState(Player.PlayerAnimationState.IDLE);
             }
 
             //if the player isn't shooting, allows movement
-            if (key.IsKeyDown(Keys.A) && player.GetAnimationState() != Player.AnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+            if (key.IsKeyDown(Keys.A) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
             {
-                player.SetAnimationState(Player.AnimationState.RUNNING);
+                player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
                 player.MoveBy(-5, 0);
             }
 
-            if (key.IsKeyDown(Keys.D) && player.GetAnimationState() != Player.AnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+            if (key.IsKeyDown(Keys.D) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
             {
-                player.SetAnimationState(Player.AnimationState.RUNNING);
+                player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
                 player.MoveBy(5, 0);
             }
 
@@ -144,7 +168,7 @@ namespace CandyJam
             }
 
             //shoot if the player clicks
-            if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.AnimationState.SHOOTING)
+            if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING)
             {
                 bullets.Add(player.Shoot(mouse.X, mouse.Y));
                 bullets.Last<Bullet>().SetScreenDimensions(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
@@ -159,10 +183,19 @@ namespace CandyJam
             //end of controls, set new previousMouseState
             previousMouseState = mouse;
             previousKeys = key;
+        }
 
+        protected override void Update(GameTime gameTime)
+        {
+            //set the statically accessable time last frame took to complete
+            DeltaTime = gameTime.ElapsedGameTime;
+
+            UpdateWave();
+            Controls();
+            
             List<Rectangle> geometry = new List<Rectangle>();
 
-            Rectangle floorRect = new Rectangle(-GraphicsDevice.Viewport.Width, defaultGroundLevel, GraphicsDevice.Viewport.Width*2, 1);
+            Rectangle floorRect = new Rectangle(-GraphicsDevice.Viewport.Width, defaultGroundLevel, GraphicsDevice.Viewport.Width*3, 5);
             geometry.Add(floorRect);
 
             //calculates the player's ground level
@@ -205,29 +238,6 @@ namespace CandyJam
                 }
             }
 
-            if (player.GetEnemiesKilled() > (enemyTarget * wave))
-            {
-                wave++;
-                waveDelayTimer = waveDelay;
-                player.ResetEnemiesKilled();
-                pickup = new Sprite(TextureLibrary.pickupTexture);
-                pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) + (pickup.GetRect().Width / 2), (GraphicsDevice.Viewport.Height / 2) + (pickup.GetRect().Height / 2));
-            }
-
-            if (waveDelayTimer == 0.0f)
-            {
-                enemies = EnemySpawner.Update(enemies, GraphicsDevice.Viewport, wave);
-            }
-            else
-            {
-                waveDelayTimer -= Main.DeltaTime.Milliseconds;
-
-                if (waveDelayTimer <= 0.0f)
-                {
-                    waveDelayTimer = 0.0f;
-                }
-            }
-
             //updates the enemy objects
             for (int i = 0; i < enemies.Count; i++)
             {
@@ -235,7 +245,7 @@ namespace CandyJam
 
                 bool playerOnGround = (defaultGroundLevel == player.GetRect().Bottom);
                 enemy.Update(player.GetRect().Location, playerOnGround);
-                enemy.Physics(defaultGroundLevel);
+                enemy.Physics(enemy.CalculateGroundLevel(geometry));
 
                 Rectangle nextPos = enemy.GetNextPosition();
 
@@ -261,6 +271,17 @@ namespace CandyJam
                         if (enemies[j].Collision(nextPos))
                         {
                             enemy.SwapDirection();
+                            if (enemies[j].Collision(nextPos))
+                            {
+                                if (enemy.GetRect().Center.X < enemies[j].GetRect().Center.X)
+                                {
+                                    enemy.MoveBy(-enemy.GetRect().Width / 2, 0);
+                                }
+                                else
+                                {
+                                    enemy.MoveBy(enemy.GetRect().Width / 2, 0);
+                                }
+                            }
                         }
                     }
                 }

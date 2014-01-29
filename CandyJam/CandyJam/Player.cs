@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+	File:			Player.cs
+	Version:		1.4
+	Last altered:	February 2013.
+	Authors:		James MacGilp.
+	
+	Extends:		SpriteAnimated.cs
+	
+	Description:	- Encapsulates the functionality of the player sprite object.
+  
+                    - Contains data on basic gameplay elements, such as lives, amount of enemies killed, and invulnerability (activated for a specified delay after damage is taken).
+	
+					- Shoot(int, int) creates a bullet aimed at the specified mouse position. The Gunpoint variable can be used to define where the bullets originate from the Player sprite.
+					
+					-  PlayerAnimationState is used to set which animation should be playing. The UpdateAnimation() function uses this with the AnimationLibrary static class to play the correct animation.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,8 +32,8 @@ namespace CandyJam
         protected float invulDelay = 3000.0f;
         protected int enemiesKilled = 0;
 
-        public enum AnimationState { IDLE = 0, RUNNING = 1, SHOOTING = 2 };
-        protected AnimationState animState = AnimationState.IDLE;
+        public enum PlayerAnimationState { IDLE = 0, RUNNING = 1, SHOOTING = 2 , DYING = 3};
+        protected PlayerAnimationState animationState = PlayerAnimationState.IDLE;
 
         public Player(Texture2D tex, int numberOfFrames, int numberOfAnimations)
         {
@@ -60,7 +77,7 @@ namespace CandyJam
 
         public Bullet Shoot(int mouseX, int mouseY)
         {
-            SetAnimationState(Player.AnimationState.SHOOTING);
+            SetAnimationState(Player.PlayerAnimationState.SHOOTING);
             ResetFrames();
             ResetTimer();
             SoundLibrary.PlayerShoot();
@@ -111,14 +128,14 @@ namespace CandyJam
             return 1.0f;
         }
 
-        public void SetAnimationState(AnimationState state)
+        public void SetAnimationState(PlayerAnimationState state)
         {
-            animState = state;
+            animationState = state;
         }
 
-        public AnimationState GetAnimationState()
+        public PlayerAnimationState GetAnimationState()
         {
-            return animState;
+            return animationState;
         }
 
         public Point GetGunPoint()
@@ -143,24 +160,26 @@ namespace CandyJam
 
         public void UpdateAnimation()
         {
-            if (animState == AnimationState.IDLE)
+            if (animationState == PlayerAnimationState.IDLE)
             {
                 SetAnimationNumber(0);
                 frameNumber = 0;
             }
-            if (animState == AnimationState.RUNNING)
+            if (animationState == PlayerAnimationState.RUNNING)
             {
-                SetAnimationNumber(0);
                 AnimationLibrary.AnimationLooped(this, 10, 0);
             }
-            if (animState == AnimationState.SHOOTING)
+            if (animationState == PlayerAnimationState.SHOOTING)
             {
-                SetAnimationNumber(1);
                 bool animDone = AnimationLibrary.AnimationSingle(this, 5, 1);
                 if(animDone)
                 {
-                    animState = AnimationState.IDLE;
+                    animationState = PlayerAnimationState.IDLE;
                 }
+            }
+            if (animationState == PlayerAnimationState.DYING)
+            {
+                AnimationLibrary.AnimationSingleAndPause(this, 5, 2, 20);
             }
         }
     }

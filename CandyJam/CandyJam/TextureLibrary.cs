@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+	File:			TextureLibrary.cs
+	Version:		1.0
+	Last altered:	28/01/2014.
+	Authors:		James MacGilp.
+
+	Description:	- Used to load in textures which are statically accessable. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

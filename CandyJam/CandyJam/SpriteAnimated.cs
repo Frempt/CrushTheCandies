@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+	File:			SpriteAnimated.cs
+	Version:		1.1
+	Last altered:	29/01/2014.
+	Authors:		James MacGilp.
+	Extends: 		SpritePhysics.cs
+
+	Description:	- Extends a sprite object to allow animation via spritesheet. 
+	
+					- Adds several integers to control the rate of animation, number of frames, number of animations, etc.
+
+                    - Also adds a SpriteEffects object, which allows the image to be flipped. By default, when MoveBy(int, int) is called,
+                      this will be updated to reflect movement direction (default is facing right).
+					
+					- This class should be extended by more specific classes.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -1,4 +1,19 @@
-﻿using System;
+﻿/*
+	File:			AnimationLibrary.cs
+	Version:		1.0
+	Last altered:	April 2013.
+	Authors:		James MacGilp.
+
+	Description:	- Used to animate graphics via spritesheets. 
+	
+					- There are functions for both looped and single animations, both of which take a graphic to be animated, 
+					  a rate at which to animate, and which animation to be played.
+					
+					- The function for a single animation returns a boolean, which is true if the animation is complete, 
+					  and false if it is not.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
