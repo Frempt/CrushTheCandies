@@ -12,7 +12,7 @@ namespace CandyJam
         protected int screenWidth;
         protected int screenHeight;
         protected float rotation = 0.0f;
-        protected float spinSpeed = 0.01f;
+        protected float spinSpeed = 0.005f;
 
         protected bool done;
 
@@ -33,7 +33,14 @@ namespace CandyJam
         {
             MoveBy((int)velocity.X, (int)velocity.Y);
 
-            rotation += (Main.DeltaTime.Milliseconds * spinSpeed);
+            if (velocity.X < 0.0f)
+            {
+                rotation += (Main.DeltaTime.Milliseconds * -spinSpeed);
+            }
+            else
+            {
+                rotation += (Main.DeltaTime.Milliseconds * spinSpeed);
+            }
 
             if (rect.X >= screenWidth || rect.Y >= screenHeight)
             {

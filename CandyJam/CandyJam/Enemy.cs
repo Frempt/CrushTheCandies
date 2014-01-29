@@ -42,14 +42,16 @@ namespace CandyJam
             animationNumber = 0;
             frameTotal = numberOfFrames - 1;
 
-            rect = new Rectangle(0, 0, tex.Width, tex.Height);
+            rect = new Rectangle(0, 0, tex.Width / numberOfFrames, tex.Height / numberOfAnimations);
 
             velocity = new Vector2(0.0f, 0.0f);
+
+            effects = SpriteEffects.None;
         }
 
         public void Update(Point playerPosition, bool isPlayerGrounded)
         {
-            if (IsGrounded() && isPlayerGrounded)
+            if (IsGrounded() && isPlayerGrounded && !IsDying())
             {
                 velocity.X = playerPosition.X - rect.Left;
                 velocity.Normalize();
@@ -71,11 +73,17 @@ namespace CandyJam
         public void Die()
         {
             animationState = EnemyAnimationState.DYING;
+            velocity.X = 0.0f;
         }
 
         public bool IsDead()
         {
             return dead;
+        }
+
+        public bool IsDying()
+        {
+            return animationState == EnemyAnimationState.DYING;
         }
 
         public EnemyAnimationState GetAnimationState()

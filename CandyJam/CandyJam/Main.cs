@@ -32,6 +32,7 @@ namespace CandyJam
         private float waveDelay = 10000.0f;
         private int wave = 1;
         private int enemyTarget = 10;
+        private int initialSpawnCount = 2;
 
         private MouseState previousMouseState;
         private KeyboardState previousKeys;
@@ -58,22 +59,45 @@ namespace CandyJam
             defaultGroundLevel = GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 8;
 
             background = new Sprite(TextureLibrary.backgroundTexture);
-            player = new Player(TextureLibrary.playerTexture, 4, 2);
+            player = new Player(TextureLibrary.playerTexture, 4, 3);
             bullets = new List<Bullet>();
             enemies = new List<Enemy>();
             platforms = new List<Platform>();
 
+            int[] positions;
+            positions = new int[wave * initialSpawnCount];
+
+            for (int i = 0; i < positions.Length; i++)
+            {
+                if (i < positions.Length / 2) positions[i] = (positions.Length * 50) * -i;
+                else positions[i] = (positions.Length * 50) * i;
+            }
+
+            SpawnInitialEnemies(positions);
+
             Platform platform = new Platform(TextureLibrary.platformTexture, 1);
-            platform.MoveTo(GraphicsDevice.Viewport.Width / 4, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
+            platform.MoveTo(GraphicsDevice.Viewport.Width / 8, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
             platforms.Add(platform);
 
-            Platform platform2 = new Platform(TextureLibrary.platformTexture, 2);
-            platform2.MoveTo(GraphicsDevice.Viewport.Width / 4, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 2);
+            Platform platform2 = new Platform(TextureLibrary.platformTexture, 1);
+            platform2.MoveTo(GraphicsDevice.Viewport.Width / 8, GraphicsDevice.Viewport.Height / 2);
             platforms.Add(platform2);
 
-            Platform platform3 = new Platform(TextureLibrary.platformTexture, 3);
-            platform3.MoveTo(GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
+            Platform platform3 = new Platform(TextureLibrary.platformTexture, 2);
+            platform3.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 3);
             platforms.Add(platform3);
+
+            Platform platform4 = new Platform(TextureLibrary.platformTexture, 2);
+            platform4.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 3);
+            platforms.Add(platform4);
+
+            Platform platform5 = new Platform(TextureLibrary.platformTexture, 1);
+            platform5.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
+            platforms.Add(platform5);
+
+            Platform platform6 = new Platform(TextureLibrary.platformTexture, 1);
+            platform6.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 2);
+            platforms.Add(platform6);
         }
 
         protected override void LoadContent()
@@ -83,7 +107,6 @@ namespace CandyJam
 
             SoundLibrary.Setup(Content);
             TextureLibrary.LoadTextures(Content);
-
 
             font = Content.Load<SpriteFont>("font");
         }
@@ -97,11 +120,18 @@ namespace CandyJam
             //wave based logic
             if (player.GetEnemiesKilled() > (enemyTarget * wave))
             {
-                wave++;
-                waveDelayTimer = waveDelay;
-                player.ResetEnemiesKilled();
-                pickup = new Sprite(TextureLibrary.pickupTexture);
-                pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) + (pickup.GetRect().Width / 2), (GraphicsDevice.Viewport.Height / 2) + (pickup.GetRect().Height / 2));
+                if (wave >= 5)
+                {
+                    //win state reached
+                }
+                else
+                {
+                    wave++;
+                    waveDelayTimer = waveDelay;
+                    player.ResetEnemiesKilled();
+                    pickup = new Sprite(TextureLibrary.pickupTexture);
+                    pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) + (pickup.GetRect().Width / 2), (GraphicsDevice.Viewport.Height / 2) + (pickup.GetRect().Height / 2));
+                }
             }
 
             if (waveDelayTimer == 0.0f)
@@ -115,7 +145,31 @@ namespace CandyJam
                 if (waveDelayTimer <= 0.0f)
                 {
                     waveDelayTimer = 0.0f;
+
+                    int[] positions;
+                    positions = new int[wave * initialSpawnCount];
+
+                    for (int i = 0; i < positions.Length; i++)
+                    {
+                        if(i < positions.Length/2) positions[i] = (positions.Length * 50) * -i;
+                        else positions[i] = (positions.Length * 50) * i;
+                    }
+
+                    SpawnInitialEnemies(positions);
                 }
+            }
+        }
+
+        public void SpawnInitialEnemies(int[] xPositions)
+        {
+            for (int i = 0; i < xPositions.Length; i++)
+            {
+                Enemy enemy = new Enemy(TextureLibrary.enemyTexture, 4, 2);
+                enemy.MoveTo(xPositions[i], GraphicsDevice.Viewport.Height / 2);
+
+                if(xPositions[i] < GraphicsDevice.Viewport.Width/2) enemy.SetVelocity(new Vector2(5.0f, 0.0f));
+                else enemy.SetVelocity(new Vector2(-5.0f, 0.0f));
+                enemies.Add(enemy);
             }
         }
 
@@ -131,53 +185,56 @@ namespace CandyJam
                 this.Exit();
             }
 
-            //allows the player to jump
-            if ((key.IsKeyDown(Keys.Space) && previousKeys.IsKeyUp(Keys.Space)) || (key.IsKeyDown(Keys.W) && previousKeys.IsKeyUp(Keys.W)))
+            if (player.IsAlive())
             {
-                player.Jump();
-            }
+                //allows the player to jump
+                if ((key.IsKeyDown(Keys.Space) && previousKeys.IsKeyUp(Keys.Space)) || (key.IsKeyDown(Keys.W) && previousKeys.IsKeyUp(Keys.W)))
+                {
+                    player.Jump();
+                }
 
-            if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel - 1)
-            {
-                player.DropDown();
-            }
+                if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel - 1)
+                {
+                    player.DropDown();
+                }
 
-            //set the animation state back to idle
-            if (player.GetAnimationState() == Player.PlayerAnimationState.RUNNING)
-            {
-                player.SetAnimationState(Player.PlayerAnimationState.IDLE);
-            }
+                //set the animation state back to idle
+                if (player.GetAnimationState() == Player.PlayerAnimationState.RUNNING)
+                {
+                    player.SetAnimationState(Player.PlayerAnimationState.IDLE);
+                }
 
-            //if the player isn't shooting, allows movement
-            if (key.IsKeyDown(Keys.A) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
-            {
-                player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
-                player.MoveBy(-5, 0);
-            }
+                //if the player isn't shooting, allows movement
+                if (key.IsKeyDown(Keys.A) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+                {
+                    player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                    player.MoveBy(-5, 0);
+                }
 
-            if (key.IsKeyDown(Keys.D) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
-            {
-                player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
-                player.MoveBy(5, 0);
-            }
+                if (key.IsKeyDown(Keys.D) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+                {
+                    player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                    player.MoveBy(5, 0);
+                }
 
-            //ensure the player faces the direction in which he aims
-            if (mouse.LeftButton == ButtonState.Pressed)
-            {
-                player.UpdateFacing(mouse.X);
-            }
+                //ensure the player faces the direction in which he aims
+                if (mouse.LeftButton == ButtonState.Pressed)
+                {
+                    player.UpdateFacing(mouse.X);
+                }
 
-            //shoot if the player clicks
-            if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING)
-            {
-                bullets.Add(player.Shoot(mouse.X, mouse.Y));
-                bullets.Last<Bullet>().SetScreenDimensions(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
-            }
+                //shoot if the player clicks
+                if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING)
+                {
+                    bullets.Add(player.Shoot(mouse.X, mouse.Y));
+                    bullets.Last<Bullet>().SetScreenDimensions(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+                }
 
-            //play the roar sound when left shift is pressed
-            if (key.IsKeyDown(Keys.LeftShift) && previousKeys.IsKeyUp(Keys.LeftShift))
-            {
-                SoundLibrary.Roar();
+                //play the roar sound when left shift is pressed
+                if (key.IsKeyDown(Keys.LeftShift) && previousKeys.IsKeyUp(Keys.LeftShift))
+                {
+                    SoundLibrary.Roar();
+                }
             }
 
             //end of controls, set new previousMouseState
@@ -212,7 +269,7 @@ namespace CandyJam
 
             //updates the player object
             player.Physics(player.CalculateGroundLevel(geometry));
-            player.Update();
+            if(player.IsAlive()) player.Update();
             player.UpdateAnimation();
 
             if (pickup != null)
@@ -246,64 +303,67 @@ namespace CandyJam
                 bool playerOnGround = (defaultGroundLevel == player.GetRect().Bottom);
                 enemy.Update(player.GetRect().Location, playerOnGround);
                 enemy.Physics(enemy.CalculateGroundLevel(geometry));
+                enemy.UpdateAnimation();
 
-                Rectangle nextPos = enemy.GetNextPosition();
-
-                if (nextPos.Left <= 0 || nextPos.Right >= GraphicsDevice.Viewport.Width)
+                if (!enemy.IsDying())
                 {
-                    enemy.SwapDirection();
+                    Rectangle nextPos = enemy.GetNextPosition();
 
-                    if (enemy.GetNextPosition().Left <= 0)
+                    if (nextPos.Left <= 0 || nextPos.Right >= GraphicsDevice.Viewport.Width)
                     {
-                        enemy.MoveTo(1, enemy.GetRect().Y);
-                    }
-                    if (enemy.GetNextPosition().Right >= GraphicsDevice.Viewport.Width)
-                    {
-                        enemy.MoveTo((GraphicsDevice.Viewport.Width - enemy.GetRect().Width) - 1, enemy.GetRect().Y);
-                    }
-                }
+                        enemy.SwapDirection();
 
-                //checks if an enemy has been hit by another enemy
-                for (int j = 0; j < enemies.Count; j++)
-                {
-                    if (enemy != enemies[j])
-                    {
-                        if (enemies[j].Collision(nextPos))
+                        if (enemy.GetNextPosition().Left <= 0)
                         {
-                            enemy.SwapDirection();
+                            enemy.MoveTo(1, enemy.GetRect().Y);
+                        }
+                        if (enemy.GetNextPosition().Right >= GraphicsDevice.Viewport.Width)
+                        {
+                            enemy.MoveTo((GraphicsDevice.Viewport.Width - enemy.GetRect().Width) - 1, enemy.GetRect().Y);
+                        }
+                    }
+
+                    //checks if an enemy has been hit by another enemy
+                    for (int j = 0; j < enemies.Count; j++)
+                    {
+                        if (enemy != enemies[j])
+                        {
                             if (enemies[j].Collision(nextPos))
                             {
-                                if (enemy.GetRect().Center.X < enemies[j].GetRect().Center.X)
+                                enemy.SwapDirection();
+                                if (enemies[j].Collision(nextPos))
                                 {
-                                    enemy.MoveBy(-enemy.GetRect().Width / 2, 0);
-                                }
-                                else
-                                {
-                                    enemy.MoveBy(enemy.GetRect().Width / 2, 0);
+                                    if (enemy.GetRect().Center.X < enemies[j].GetRect().Center.X)
+                                    {
+                                        enemy.MoveBy(-enemy.GetRect().Width / 2, 0);
+                                    }
+                                    else
+                                    {
+                                        enemy.MoveBy(enemy.GetRect().Width / 2, 0);
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                //checks if an enemy has been hit by a bullet
-                for (int j = 0; j < bullets.Count; j++)
-                {
-                    if(enemy.Collision(bullets[j].GetRect()))
+                    //checks if an enemy has been hit by a bullet
+                    for (int j = 0; j < bullets.Count; j++)
                     {
-                        bullets.Remove(bullets[j]);
-                        player.EnemyKilled();
+                        if (!enemy.IsDying() && enemy.Collision(bullets[j].GetRect()))
+                        {
+                            bullets.Remove(bullets[j]);
+                            player.EnemyKilled();
+                            enemy.Die();
+                        }
+                    }
+
+                    //check if the enemy has hit the player
+                    if (enemy.Collision(player.GetRect()) && !player.IsInvulnerable())
+                    {
+                        player.LoseLife();
                         enemy.Die();
                     }
                 }
-
-                //check if the enemy has hit the player
-                if(enemy.Collision(player.GetRect()) && !player.IsInvulnerable())
-                {
-                    player.LoseLife();
-                    enemy.Die();
-                }
-
                 //if the enemy is dead, it is destroyed
                 if (enemy.IsDead())
                 {
@@ -334,12 +394,12 @@ namespace CandyJam
 
             foreach (Bullet bullet in bullets)
             {
-                spriteBatch.Draw(bullet.GetTexture(), bullet.GetRect(), null, Color.White, bullet.GetRotation(), Vector2.Zero, SpriteEffects.None, 0.0f);
+                spriteBatch.Draw(bullet.GetTexture(), bullet.GetRect(), null, Color.White, bullet.GetRotation(), Vector2.Zero, bullet.GetSpriteEffects(), 0.0f);
             }
 
             foreach (Enemy enemy in enemies)
             {
-                spriteBatch.Draw(enemy.GetTexture(), enemy.GetRect(), Color.White);
+                spriteBatch.Draw(enemy.GetTexture(), enemy.GetRect(), enemy.GetSourceRect(), Color.White, 0.0f, Vector2.Zero, enemy.GetSpriteEffects(), 0.0f);
             }
 
             if (pickup != null)

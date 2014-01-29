@@ -8,9 +8,6 @@
 	Description:	- Extends a sprite object to allow animation via spritesheet. 
 	
 					- Adds several integers to control the rate of animation, number of frames, number of animations, etc.
-
-                    - Also adds a SpriteEffects object, which allows the image to be flipped. By default, when MoveBy(int, int) is called,
-                      this will be updated to reflect movement direction (default is facing right).
 					
 					- This class should be extended by more specific classes.
  */
@@ -29,7 +26,6 @@ namespace CandyJam
         protected int frameNumber;
         protected int frameTotal;
         protected int animationNumber;
-        protected SpriteEffects effects;
 
         protected int timer;
 
@@ -58,11 +54,6 @@ namespace CandyJam
             int top = animationNumber * rect.Height;
             Rectangle sourceRect = new Rectangle(left, top, rect.Width, rect.Height);
             return sourceRect;
-        }
-
-        public SpriteEffects GetSpriteEffects()
-        {
-            return effects;
         }
 
         public void ResetFrames()
@@ -117,21 +108,6 @@ namespace CandyJam
             else
             {
                 return true;
-            }
-        }
-
-        new public void MoveBy(int xMove, int yMove)
-        {
-            Rectangle tempRect = new Rectangle(rect.Left + xMove, rect.Top + yMove, rect.Width, rect.Height);
-            rect = tempRect;
-
-            if (xMove > 0)
-            {
-                effects = SpriteEffects.None;
-            }
-            if (xMove < 0)
-            {
-                effects = SpriteEffects.FlipHorizontally;
             }
         }
     }

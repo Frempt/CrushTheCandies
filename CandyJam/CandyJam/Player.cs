@@ -107,16 +107,29 @@ namespace CandyJam
         {
             lives--;
             invulTimer = invulDelay;
+
+            if (lives <= 0)
+            {
+                SetAnimationState(PlayerAnimationState.DYING);
+            }
         }
 
         public void AddLife()
         {
-            lives++;
+            if (lives < 5)
+            {
+                lives++;
+            }
         }
 
         public bool IsInvulnerable()
         {
             return invulTimer > 0.0f;
+        }
+
+        public bool IsAlive()
+        {
+            return lives > 0;
         }
 
         public float GetAlpha()
@@ -179,7 +192,11 @@ namespace CandyJam
             }
             if (animationState == PlayerAnimationState.DYING)
             {
-                AnimationLibrary.AnimationSingleAndPause(this, 5, 2, 20);
+                bool animDone = AnimationLibrary.AnimationSingleAndPause(this, 5, 2, 20);
+                if (animDone)
+                {
+                    //gameover state reached
+                }
             }
         }
     }
