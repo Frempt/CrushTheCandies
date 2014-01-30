@@ -27,6 +27,8 @@ namespace CandyJam
     class SoundLibrary
     {
         private static ContentManager content;
+        private static SoundEffect music;
+        private static SoundEffectInstance musicInstance;
         private static SoundEffect[] playerShoot;
         private static SoundEffect[] roar;
 
@@ -37,6 +39,9 @@ namespace CandyJam
         public static void Setup(ContentManager contentManager)
         {
             content = contentManager;
+
+            music = contentManager.Load<SoundEffect>("music");
+            musicInstance = music.CreateInstance();
 
             playerShoot = LoadSound("player_shoot", 2);
             roar = LoadSound("roar", 1);
@@ -61,6 +66,22 @@ namespace CandyJam
         public static void Roar()
         {
             roar[0].Play();
+        }
+
+        public static void MusicStart()
+        {
+            if (musicInstance.State != SoundState.Playing)
+            {
+                musicInstance.Play();
+            }
+        }
+
+        public static void MusicStop()
+        {
+            if (musicInstance.State == SoundState.Playing)
+            {
+                musicInstance.Stop();
+            }
         }
     }
 }

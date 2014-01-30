@@ -98,6 +98,8 @@ namespace CandyJam
             Platform platform6 = new Platform(TextureLibrary.platformTexture, 1);
             platform6.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 2);
             platforms.Add(platform6);
+
+            SoundLibrary.MusicStart();
         }
 
         protected override void LoadContent()
@@ -205,15 +207,15 @@ namespace CandyJam
                 }
 
                 //if the player isn't shooting, allows movement
-                if (key.IsKeyDown(Keys.A) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+                if (key.IsKeyDown(Keys.A))
                 {
-                    player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                    if(player.GetAnimationState() == Player.PlayerAnimationState.IDLE) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
                     player.MoveBy(-5, 0);
                 }
 
-                if (key.IsKeyDown(Keys.D) && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING && mouse.LeftButton != ButtonState.Pressed)
+                if (key.IsKeyDown(Keys.D))
                 {
-                    player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                    if (player.GetAnimationState() == Player.PlayerAnimationState.IDLE) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
                     player.MoveBy(5, 0);
                 }
 

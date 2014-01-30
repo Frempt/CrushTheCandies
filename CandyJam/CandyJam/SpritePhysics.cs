@@ -29,7 +29,7 @@ namespace CandyJam
     class SpritePhysics : Sprite
     {
         protected bool grounded = false;
-        protected float jumpVelocity = 20.0f;
+        protected float jumpVelocity = 25.0f;
 
         public SpritePhysics()
         {

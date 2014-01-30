@@ -20,7 +20,7 @@ namespace CandyJam
         public static void Setup()
         {
             enemySpawnTimer = 0.0f;
-            enemySpawnDelay = 5000.0f;
+            enemySpawnDelay = 1000.0f;
             maxEnemies = 6;
         }
 

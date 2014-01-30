@@ -9,10 +9,10 @@ namespace CandyJam
 {
     class Platform : Sprite
     {
-        protected float maxLife = 5000.0f;
+        protected float maxLife = 2000.0f;
         protected float life;
         protected float timer = 0.0f;
-        protected float delay = 4000.0f;
+        protected float delay = 5000.0f;
         protected bool isSolid = true;
         protected int segments = 1;
 
