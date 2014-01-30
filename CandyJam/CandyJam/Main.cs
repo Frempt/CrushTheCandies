@@ -13,6 +13,9 @@ namespace CandyJam
 {
     public class Main : Microsoft.Xna.Framework.Game
     {
+        public enum GameState{MENU = 0, INGAME = 1, GAMEOVER = 2};
+        GameState gameState = GameState.MENU;
+
         public static TimeSpan DeltaTime;
 
         private int defaultGroundLevel;
@@ -21,9 +24,10 @@ namespace CandyJam
         private SpriteBatch spriteBatch;
         private SpriteFont font;
 
+        private Sprite menuBackground;
         private Sprite background;
         private Player player;
-        private Sprite pickup;
+        private SpritePhysics pickup;
         private List<Bullet> bullets;
         private List<Enemy> enemies;
         private List<Platform> platforms;
@@ -54,26 +58,41 @@ namespace CandyJam
         {
             base.Initialize();
 
+            defaultGroundLevel = GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 11;
+
+            ResetLevel();
+        }
+
+        protected override void LoadContent()
+        {
+            // Create a new SpriteBatch, which can be used to draw textures.
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            SoundLibrary.Setup(Content);
+            TextureLibrary.LoadTextures(Content);
+
+            font = Content.Load<SpriteFont>("font");
+        }
+
+        protected override void UnloadContent()
+        {
+        }
+
+        protected void ResetLevel()
+        {
             EnemySpawner.Setup();
 
-            defaultGroundLevel = GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 8;
-
+            menuBackground = new Sprite(TextureLibrary.menuBackgroundTexture);
+            menuBackground.SetRect(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
             background = new Sprite(TextureLibrary.backgroundTexture);
+            background.SetRect(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
             player = new Player(TextureLibrary.playerTexture, 4, 3);
+            player.MoveTo(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
             bullets = new List<Bullet>();
             enemies = new List<Enemy>();
             platforms = new List<Platform>();
 
-            int[] positions;
-            positions = new int[wave * initialSpawnCount];
-
-            for (int i = 0; i < positions.Length; i++)
-            {
-                if (i < positions.Length / 2) positions[i] = (positions.Length * 50) * -i;
-                else positions[i] = (positions.Length * 50) * i;
-            }
-
-            SpawnInitialEnemies(positions);
+            EnemySpawner.WaveStart(enemies, GraphicsDevice.Viewport, wave, initialSpawnCount);
 
             Platform platform = new Platform(TextureLibrary.platformTexture, 1);
             platform.MoveTo(GraphicsDevice.Viewport.Width / 8, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
@@ -99,22 +118,8 @@ namespace CandyJam
             platform6.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 2);
             platforms.Add(platform6);
 
-            SoundLibrary.MusicStart();
-        }
-
-        protected override void LoadContent()
-        {
-            // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            SoundLibrary.Setup(Content);
-            TextureLibrary.LoadTextures(Content);
-
-            font = Content.Load<SpriteFont>("font");
-        }
-
-        protected override void UnloadContent()
-        {
+            waveDelayTimer = 0.0f;
+            wave = 1;
         }
 
         protected void UpdateWave()
@@ -131,8 +136,9 @@ namespace CandyJam
                     wave++;
                     waveDelayTimer = waveDelay;
                     player.ResetEnemiesKilled();
-                    pickup = new Sprite(TextureLibrary.pickupTexture);
-                    pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) + (pickup.GetRect().Width / 2), (GraphicsDevice.Viewport.Height / 2) + (pickup.GetRect().Height / 2));
+                   
+                    pickup = new SpritePhysics(TextureLibrary.pickupTexture);
+                    pickup.MoveTo((GraphicsDevice.Viewport.Width / 2) - (pickup.GetRect().Width / 2), 0);
                 }
             }
 
@@ -148,30 +154,8 @@ namespace CandyJam
                 {
                     waveDelayTimer = 0.0f;
 
-                    int[] positions;
-                    positions = new int[wave * initialSpawnCount];
-
-                    for (int i = 0; i < positions.Length; i++)
-                    {
-                        if(i < positions.Length/2) positions[i] = (positions.Length * 50) * -i;
-                        else positions[i] = (positions.Length * 50) * i;
-                    }
-
-                    SpawnInitialEnemies(positions);
+                    enemies = EnemySpawner.WaveStart(enemies, GraphicsDevice.Viewport, wave, initialSpawnCount);
                 }
-            }
-        }
-
-        public void SpawnInitialEnemies(int[] xPositions)
-        {
-            for (int i = 0; i < xPositions.Length; i++)
-            {
-                Enemy enemy = new Enemy(TextureLibrary.enemyTexture, 4, 2);
-                enemy.MoveTo(xPositions[i], GraphicsDevice.Viewport.Height / 2);
-
-                if(xPositions[i] < GraphicsDevice.Viewport.Width/2) enemy.SetVelocity(new Vector2(5.0f, 0.0f));
-                else enemy.SetVelocity(new Vector2(-5.0f, 0.0f));
-                enemies.Add(enemy);
             }
         }
 
@@ -187,55 +171,65 @@ namespace CandyJam
                 this.Exit();
             }
 
-            if (player.IsAlive())
+            if (gameState == GameState.MENU)
             {
-                //allows the player to jump
-                if ((key.IsKeyDown(Keys.Space) && previousKeys.IsKeyUp(Keys.Space)) || (key.IsKeyDown(Keys.W) && previousKeys.IsKeyUp(Keys.W)))
+                if (Mouse.GetState().LeftButton == ButtonState.Pressed && previousMouseState.LeftButton == ButtonState.Released)
                 {
-                    player.Jump();
+                    gameState = GameState.INGAME;
                 }
-
-                if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel - 1)
+            }
+            else if (gameState == GameState.INGAME)
+            {
+                if (player.IsAlive())
                 {
-                    player.DropDown();
-                }
+                    //allows the player to jump
+                    if ((key.IsKeyDown(Keys.Space) && previousKeys.IsKeyUp(Keys.Space)) || (key.IsKeyDown(Keys.W) && previousKeys.IsKeyUp(Keys.W)))
+                    {
+                        player.Jump();
+                    }
 
-                //set the animation state back to idle
-                if (player.GetAnimationState() == Player.PlayerAnimationState.RUNNING)
-                {
-                    player.SetAnimationState(Player.PlayerAnimationState.IDLE);
-                }
+                    if (key.IsKeyDown(Keys.S) && player.GetRect().Bottom != defaultGroundLevel - 1)
+                    {
+                        player.DropDown();
+                    }
 
-                //if the player isn't shooting, allows movement
-                if (key.IsKeyDown(Keys.A))
-                {
-                    if(player.GetAnimationState() == Player.PlayerAnimationState.IDLE) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
-                    player.MoveBy(-5, 0);
-                }
+                    //set the animation state back to idle
+                    if (player.GetAnimationState() == Player.PlayerAnimationState.RUNNING)
+                    {
+                        player.SetAnimationState(Player.PlayerAnimationState.IDLE);
+                    }
 
-                if (key.IsKeyDown(Keys.D))
-                {
-                    if (player.GetAnimationState() == Player.PlayerAnimationState.IDLE) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
-                    player.MoveBy(5, 0);
-                }
+                    //if the player isn't shooting, allows movement
+                    if (key.IsKeyDown(Keys.A) && player.GetRect().Left > 10)
+                    {
+                        if (player.GetAnimationState() == Player.PlayerAnimationState.IDLE && player.IsGrounded()) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                        player.MoveBy(-5, 0);
+                    }
 
-                //ensure the player faces the direction in which he aims
-                if (mouse.LeftButton == ButtonState.Pressed)
-                {
-                    player.UpdateFacing(mouse.X);
-                }
+                    if (key.IsKeyDown(Keys.D) && player.GetRect().Right < GraphicsDevice.Viewport.Width - 10)
+                    {
+                        if (player.GetAnimationState() == Player.PlayerAnimationState.IDLE && player.IsGrounded()) player.SetAnimationState(Player.PlayerAnimationState.RUNNING);
+                        player.MoveBy(5, 0);
+                    }
 
-                //shoot if the player clicks
-                if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING)
-                {
-                    bullets.Add(player.Shoot(mouse.X, mouse.Y));
-                    bullets.Last<Bullet>().SetScreenDimensions(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
-                }
+                    //ensure the player faces the direction in which he aims
+                    if (mouse.LeftButton == ButtonState.Pressed)
+                    {
+                        player.UpdateFacing(mouse.X);
+                    }
 
-                //play the roar sound when left shift is pressed
-                if (key.IsKeyDown(Keys.LeftShift) && previousKeys.IsKeyUp(Keys.LeftShift))
-                {
-                    SoundLibrary.Roar();
+                    //shoot if the player clicks
+                    if (mouse.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed && player.GetAnimationState() != Player.PlayerAnimationState.SHOOTING)
+                    {
+                        bullets.Add(player.Shoot(mouse.X, mouse.Y));
+                        bullets.Last<Bullet>().SetScreenDimensions(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+                    }
+
+                    //play the roar sound when left shift is pressed
+                    if (key.IsKeyDown(Keys.LeftShift) && previousKeys.IsKeyUp(Keys.LeftShift))
+                    {
+                        SoundLibrary.Roar();
+                    }
                 }
             }
 
@@ -249,128 +243,140 @@ namespace CandyJam
             //set the statically accessable time last frame took to complete
             DeltaTime = gameTime.ElapsedGameTime;
 
-            UpdateWave();
             Controls();
-            
-            List<Rectangle> geometry = new List<Rectangle>();
 
-            Rectangle floorRect = new Rectangle(-GraphicsDevice.Viewport.Width, defaultGroundLevel, GraphicsDevice.Viewport.Width*3, 5);
-            geometry.Add(floorRect);
-
-            //calculates the player's ground level
-            for (int i = 0; i < platforms.Count; i++)
+            if (gameState == GameState.INGAME)
             {
-                Platform platform = platforms[i];
-                platform.Update(new Point(player.GetRect().Center.X, player.GetRect().Bottom - 1));
+                SoundLibrary.MusicStart();
+                UpdateWave();
 
-                if (platform.IsSolid())
+                List<Rectangle> geometry = new List<Rectangle>();
+
+                Rectangle floorRect = new Rectangle(-GraphicsDevice.Viewport.Width, defaultGroundLevel, GraphicsDevice.Viewport.Width * 3, 5);
+                geometry.Add(floorRect);
+
+                //calculates the player's ground level
+                for (int i = 0; i < platforms.Count; i++)
                 {
-                    geometry.Add(platform.GetRect());
-                }
-            }
+                    Platform platform = platforms[i];
+                    platform.Update(new Point(player.GetRect().Center.X, player.GetRect().Bottom - 1));
 
-            //updates the player object
-            player.Physics(player.CalculateGroundLevel(geometry));
-            if(player.IsAlive()) player.Update();
-            player.UpdateAnimation();
-
-            if (pickup != null)
-            {
-                if(pickup.Collision(player.GetRect()))
-                {
-                    player.AddLife();
-                    pickup = null;
-                }
-            }
-
-            //updates the bullet objects
-            for (int i = 0; i < bullets.Count; i++)
-            {
-                Bullet bullet = bullets[i];
-                bullet.Update();
-
-                //if the bullet is done, it is destroyed
-                if (bullet.IsDone())
-                {
-                    bullets.Remove(bullet);
-                    bullet = null;
-                }
-            }
-
-            //updates the enemy objects
-            for (int i = 0; i < enemies.Count; i++)
-            {
-                Enemy enemy = enemies[i];
-
-                bool playerOnGround = (defaultGroundLevel == player.GetRect().Bottom);
-                enemy.Update(player.GetRect().Location, playerOnGround);
-                enemy.Physics(enemy.CalculateGroundLevel(geometry));
-                enemy.UpdateAnimation();
-
-                if (!enemy.IsDying())
-                {
-                    Rectangle nextPos = enemy.GetNextPosition();
-
-                    if (nextPos.Left <= 0 || nextPos.Right >= GraphicsDevice.Viewport.Width)
+                    if (platform.IsSolid())
                     {
-                        enemy.SwapDirection();
-
-                        if (enemy.GetNextPosition().Left <= 0)
-                        {
-                            enemy.MoveTo(1, enemy.GetRect().Y);
-                        }
-                        if (enemy.GetNextPosition().Right >= GraphicsDevice.Viewport.Width)
-                        {
-                            enemy.MoveTo((GraphicsDevice.Viewport.Width - enemy.GetRect().Width) - 1, enemy.GetRect().Y);
-                        }
+                        geometry.Add(platform.GetRect());
                     }
+                }
 
-                    //checks if an enemy has been hit by another enemy
-                    for (int j = 0; j < enemies.Count; j++)
+                //updates the player object
+                player.Physics(player.CalculateGroundLevel(geometry));
+                if (player.IsAlive()) player.Update();
+                player.UpdateAnimation();
+
+                if (pickup != null)
+                {
+                    pickup.Physics(pickup.CalculateGroundLevel(geometry));
+                    if (pickup.Collision(player.GetRect()))
                     {
-                        if (enemy != enemies[j])
+                        player.AddLife();
+                        pickup = null;
+                    }
+                }
+
+                //updates the bullet objects
+                for (int i = 0; i < bullets.Count; i++)
+                {
+                    Bullet bullet = bullets[i];
+                    bullet.Update();
+
+                    //if the bullet is done, it is destroyed
+                    if (bullet.IsDone())
+                    {
+                        bullets.Remove(bullet);
+                        bullet = null;
+                    }
+                }
+
+                //updates the enemy objects
+                for (int i = 0; i < enemies.Count; i++)
+                {
+                    Enemy enemy = enemies[i];
+
+                    bool playerOnGround = (defaultGroundLevel - 1 == player.GetRect().Bottom);
+                    enemy.Update(player.GetRect().Location, playerOnGround, player.IsInvulnerable(), player.IsAlive());
+                    enemy.Physics(enemy.CalculateGroundLevel(geometry));
+                    enemy.UpdateAnimation();
+
+                    if (!enemy.IsDying())
+                    {
+                        Rectangle nextPos = enemy.GetNextPosition();
+
+                        if (nextPos.Left <= 0 || nextPos.Right >= GraphicsDevice.Viewport.Width)
                         {
-                            if (enemies[j].Collision(nextPos))
+                            enemy.SwapDirection();
+
+                            if (enemy.GetNextPosition().Left <= 0)
                             {
-                                enemy.SwapDirection();
-                                if (enemies[j].Collision(nextPos))
+                                enemy.MoveTo(1, enemy.GetRect().Y);
+                            }
+                            if (enemy.GetNextPosition().Right >= GraphicsDevice.Viewport.Width)
+                            {
+                                enemy.MoveTo((GraphicsDevice.Viewport.Width - enemy.GetRect().Width) - 1, enemy.GetRect().Y);
+                            }
+                        }
+
+                        //checks if an enemy has been hit by another enemy
+                        for (int j = 0; j < enemies.Count; j++)
+                        {
+                            if (enemy != enemies[j])
+                            {
+                                if (enemies[j].Collision(nextPos) && !enemies[j].IsDying())
                                 {
-                                    if (enemy.GetRect().Center.X < enemies[j].GetRect().Center.X)
+                                    enemy.SwapDirection();
+                                    if (enemies[j].Collision(nextPos))
                                     {
-                                        enemy.MoveBy(-enemy.GetRect().Width / 2, 0);
-                                    }
-                                    else
-                                    {
-                                        enemy.MoveBy(enemy.GetRect().Width / 2, 0);
+                                        if (enemy.GetRect().Center.X < enemies[j].GetRect().Center.X)
+                                        {
+                                            enemy.MoveBy(-enemy.GetRect().Width / 2, 0);
+                                        }
+                                        else
+                                        {
+                                            enemy.MoveBy(enemy.GetRect().Width / 2, 0);
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    //checks if an enemy has been hit by a bullet
-                    for (int j = 0; j < bullets.Count; j++)
-                    {
-                        if (!enemy.IsDying() && enemy.Collision(bullets[j].GetRect()))
+                        //checks if an enemy has been hit by a bullet
+                        for (int j = 0; j < bullets.Count; j++)
                         {
-                            bullets.Remove(bullets[j]);
-                            player.EnemyKilled();
+                            if (!enemy.IsDying() && enemy.Collision(bullets[j].GetRect()))
+                            {
+                                bullets.Remove(bullets[j]);
+                                player.EnemyKilled();
+                                enemy.Die();
+                            }
+                        }
+
+                        //check if the enemy has hit the player
+                        if (enemy.Collision(player.GetRect()) && !player.IsInvulnerable())
+                        {
+                            player.LoseLife();
                             enemy.Die();
                         }
                     }
-
-                    //check if the enemy has hit the player
-                    if (enemy.Collision(player.GetRect()) && !player.IsInvulnerable())
+                    //if the enemy is dead, it is destroyed
+                    if (enemy.IsDead())
                     {
-                        player.LoseLife();
-                        enemy.Die();
+                        enemies.Remove(enemy);
+                        enemy = null;
                     }
                 }
-                //if the enemy is dead, it is destroyed
-                if (enemy.IsDead())
+
+                if (player.IsDead())
                 {
-                    enemies.Remove(enemy);
-                    enemy = null;
+                    gameState = GameState.MENU;
+                    ResetLevel();
                 }
             }
 
@@ -381,48 +387,58 @@ namespace CandyJam
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone);
-
-            //draw background objects
-            spriteBatch.Draw(background.GetTexture(), background.GetRect(), Color.White);
-
-            //draw ingame objects
-            foreach(Platform platform in platforms)
+            if (gameState == GameState.MENU)
             {
-                spriteBatch.Draw(platform.GetTexture(), platform.GetRect(), new Rectangle(0, 0, platform.GetTexture().Width, platform.GetTexture().Height), Color.White * platform.GetAlpha());
+                spriteBatch.Begin();
+                spriteBatch.Draw(menuBackground.GetTexture(), menuBackground.GetRect(), Color.White);
+                spriteBatch.End();
             }
 
-            spriteBatch.Draw(player.GetTexture(), player.GetRect(), player.GetSourceRect(), Color.White * player.GetAlpha(), 0.0f, Vector2.Zero, player.GetSpriteEffects(), 0.0f);
-
-            foreach (Bullet bullet in bullets)
+            if (gameState == GameState.INGAME)
             {
-                spriteBatch.Draw(bullet.GetTexture(), bullet.GetRect(), null, Color.White, bullet.GetRotation(), Vector2.Zero, bullet.GetSpriteEffects(), 0.0f);
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone);
+
+                //draw background objects
+                spriteBatch.Draw(background.GetTexture(), background.GetRect(), Color.White);
+
+                //draw ingame objects
+                foreach (Platform platform in platforms)
+                {
+                    spriteBatch.Draw(platform.GetTexture(), platform.GetRect(), new Rectangle(0, 0, platform.GetTexture().Width, platform.GetTexture().Height), Color.White * platform.GetAlpha());
+                }
+
+                spriteBatch.Draw(player.GetTexture(), player.GetRect(), player.GetSourceRect(), Color.White * player.GetAlpha(), 0.0f, Vector2.Zero, player.GetSpriteEffects(), 0.0f);
+
+                foreach (Bullet bullet in bullets)
+                {
+                    spriteBatch.Draw(bullet.GetTexture(), bullet.GetRect(), null, Color.White, bullet.GetRotation(), Vector2.Zero, bullet.GetSpriteEffects(), 0.0f);
+                }
+
+                foreach (Enemy enemy in enemies)
+                {
+                    spriteBatch.Draw(enemy.GetTexture(), enemy.GetRect(), enemy.GetSourceRect(), Color.White, 0.0f, Vector2.Zero, enemy.GetSpriteEffects(), 0.0f);
+                }
+
+                if (pickup != null)
+                {
+                    spriteBatch.Draw(pickup.GetTexture(), pickup.GetRect(), Color.White);
+                }
+
+                //if the player is aiming, draw laser sight
+                if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+                {
+                    Primitives.DrawLine(spriteBatch, player.GetGunPoint(), new Point(previousMouseState.X, previousMouseState.Y), 2.0f);
+                }
+
+                //draw foreground objects
+
+                //draw UI objects
+                spriteBatch.DrawString(font, "Lives : " + player.GetLives(), new Vector2(10.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
+                spriteBatch.DrawString(font, "Wave : " + wave, new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
+                spriteBatch.DrawString(font, "Enemies Remaining : " + ((enemyTarget * wave) - player.GetEnemiesKilled()), new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 100.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
+
+                spriteBatch.End();
             }
-
-            foreach (Enemy enemy in enemies)
-            {
-                spriteBatch.Draw(enemy.GetTexture(), enemy.GetRect(), enemy.GetSourceRect(), Color.White, 0.0f, Vector2.Zero, enemy.GetSpriteEffects(), 0.0f);
-            }
-
-            if (pickup != null)
-            {
-                spriteBatch.Draw(pickup.GetTexture(), pickup.GetRect(), Color.White);
-            }
-
-            //if the player is aiming, draw laser sight
-            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                Primitives.DrawLine(spriteBatch, player.GetGunPoint(), new Point(previousMouseState.X, previousMouseState.Y), 2.0f);
-            }
-
-            //draw foreground objects
-
-            //draw UI objects
-            spriteBatch.DrawString(font, "Lives : " + player.GetLives(), new Vector2(10.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width/600), SpriteEffects.None, 0.0f);
-            spriteBatch.DrawString(font, "Wave : " + wave, new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
-            spriteBatch.DrawString(font, "Enemies Remaining : " + ((enemyTarget*wave) - player.GetEnemiesKilled()), new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 100.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
-
-            spriteBatch.End();
 
             base.Draw(gameTime);
         }

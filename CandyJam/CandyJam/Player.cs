@@ -31,6 +31,7 @@ namespace CandyJam
         protected float invulTimer = 0.0f;
         protected float invulDelay = 3000.0f;
         protected int enemiesKilled = 0;
+        protected bool dead = false;
 
         public enum PlayerAnimationState { IDLE = 0, RUNNING = 1, SHOOTING = 2 , DYING = 3};
         protected PlayerAnimationState animationState = PlayerAnimationState.IDLE;
@@ -132,6 +133,11 @@ namespace CandyJam
             return lives > 0;
         }
 
+        public bool IsDead()
+        {
+            return dead;
+        }
+
         public float GetAlpha()
         {
             if (IsInvulnerable())
@@ -180,11 +186,11 @@ namespace CandyJam
             }
             if (animationState == PlayerAnimationState.RUNNING)
             {
-                AnimationLibrary.AnimationLooped(this, 10, 0);
+                AnimationLibrary.AnimationLooped(this, 5, 0);
             }
             if (animationState == PlayerAnimationState.SHOOTING)
             {
-                bool animDone = AnimationLibrary.AnimationSingle(this, 5, 1);
+                bool animDone = AnimationLibrary.AnimationSingle(this, 3, 1);
                 if(animDone)
                 {
                     animationState = PlayerAnimationState.IDLE;
@@ -192,10 +198,10 @@ namespace CandyJam
             }
             if (animationState == PlayerAnimationState.DYING)
             {
-                bool animDone = AnimationLibrary.AnimationSingleAndPause(this, 5, 2, 20);
+                bool animDone = AnimationLibrary.AnimationSingleAndPause(this, 10, 2, 100);
                 if (animDone)
                 {
-                    //gameover state reached
+                    dead = true;
                 }
             }
         }

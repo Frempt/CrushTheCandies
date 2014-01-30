@@ -49,17 +49,10 @@ namespace CandyJam
             {
                 life += Main.DeltaTime.Milliseconds;
 
-                if (life > maxLife) life = maxLife;
-            }
-
-            if (!isSolid && timer < delay)
-            {
-                timer += Main.DeltaTime.Milliseconds;
-                if (timer >= delay)
+                if (life >= maxLife)
                 {
-                    isSolid = true;
-                    timer = 0.0f;
                     life = maxLife;
+                    isSolid = true;
                 }
             }
         }

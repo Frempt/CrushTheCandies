@@ -49,13 +49,14 @@ namespace CandyJam
             effects = SpriteEffects.None;
         }
 
-        public void Update(Point playerPosition, bool isPlayerGrounded)
+        public void Update(Point playerPosition, bool isPlayerGrounded, bool isPlayerInvulnerable, bool isPlayerAlive)
         {
-            if (IsGrounded() && isPlayerGrounded && !IsDying())
+            if (IsGrounded() && isPlayerGrounded && !IsDying() && !isPlayerInvulnerable && isPlayerAlive)
             {
                 velocity.X = playerPosition.X - rect.Left;
-                velocity.Normalize();
-                velocity *= speed;
+
+                if (velocity.X < 0) velocity.X = -5.0f;
+                else velocity.X = 5.0f;
             }
         }
 
@@ -105,7 +106,7 @@ namespace CandyJam
 
             if (animationState == EnemyAnimationState.DYING)
             {
-                if(AnimationLibrary.AnimationSingleAndPause(this, 5, 1, 10))
+                if(AnimationLibrary.AnimationSingleAndPause(this, 10, 1, 20))
                 {
                     dead = true;
                 }

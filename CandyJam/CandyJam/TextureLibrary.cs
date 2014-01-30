@@ -26,6 +26,8 @@ namespace CandyJam
         public static Texture2D backgroundTexture;
         public static Texture2D pickupTexture;
 
+        public static Texture2D menuBackgroundTexture;
+
         private TextureLibrary()
         {
         }
@@ -39,6 +41,8 @@ namespace CandyJam
             enemyTexture = content.Load<Texture2D>("enemy");
             backgroundTexture = content.Load<Texture2D>("background");
             pickupTexture = content.Load<Texture2D>("pickup");
+
+            menuBackgroundTexture = content.Load<Texture2D>("menuBackground");
         }
     }
 }

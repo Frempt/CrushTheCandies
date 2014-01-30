@@ -31,15 +31,15 @@ namespace CandyJam
                 enemySpawnTimer = 0.0f;
                 Enemy enemy = new Enemy(TextureLibrary.enemyTexture, 4, 2);
                 Random rng = new Random();
-                int xPos = 0;
+                int xPos = rng.Next(0, screen.Width);
+
                 Vector2 velocity = new Vector2(5.0f, 0.0f);
-                if (rng.Next(1) == 1)
+                if (xPos >= screen.Width/2)
                 {
-                    xPos = screen.Width - enemy.GetRect().Width * 2;
                     velocity *= -1;
                 }
 
-                enemy.MoveTo(xPos, screen.Height / 2);
+                enemy.MoveTo(xPos, 0);
                 enemy.SetVelocity(velocity);
                 enemies.Add(enemy);
             }
@@ -47,6 +47,29 @@ namespace CandyJam
             {
                 enemySpawnTimer += Main.DeltaTime.Milliseconds;
             }
+            return enemies;
+        }
+
+        public static List<Enemy> WaveStart(List<Enemy> enemies, Viewport screen, int wave, int spawnSize)
+        {
+            for (int i = 0; i < (wave * spawnSize); i++)
+            {
+                Random rng = new Random();
+                int xPos = rng.Next(0, screen.Width);
+
+                Vector2 velocity = new Vector2(5.0f, 0.0f);
+                if (xPos >= screen.Width / 2)
+                {
+                    velocity *= -1;
+                }
+
+                Enemy enemy = new Enemy(TextureLibrary.enemyTexture, 4, 2);
+                enemy.MoveTo(xPos, 0);
+
+                enemy.SetVelocity(velocity);
+                enemies.Add(enemy);
+            }
+
             return enemies;
         }
     }
