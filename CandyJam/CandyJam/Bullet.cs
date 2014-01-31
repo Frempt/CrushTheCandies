@@ -42,7 +42,7 @@ namespace CandyJam
                 rotation += (Main.DeltaTime.Milliseconds * spinSpeed);
             }
 
-            if (rect.X >= screenWidth || rect.Y >= screenHeight)
+            if (rect.Right <= 0 || rect.Bottom <= 0 || rect.X >= screenWidth || rect.Y >= screenHeight)
             {
                 done = true;
             }

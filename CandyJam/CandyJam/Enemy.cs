@@ -58,6 +58,15 @@ namespace CandyJam
                 if (velocity.X < 0) velocity.X = -5.0f;
                 else velocity.X = 5.0f;
             }
+
+            if (!IsDead() && !IsDying())
+            {
+                Random rng = new Random();
+                if (rng.Next(500) == 0)
+                {
+                    SoundLibrary.CandyAlive();
+                }
+            }
         }
 
         public void SwapDirection()
@@ -73,6 +82,7 @@ namespace CandyJam
 
         public void Die()
         {
+            SoundLibrary.CandyDie();
             animationState = EnemyAnimationState.DYING;
             velocity.X = 0.0f;
         }

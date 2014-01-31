@@ -7,7 +7,7 @@
 	Description:	- Used to statically play sound effects and music. 
 	
 					- All SoundEffects are stored in arrays, which are filled by calling LoadSound(string, int) and passing the filename (without numeration) and the amount of effects to be loaded.
-                    - It's important to ensure there are that many sounds in the content folder under that filename (default format for naming is "filename1").
+                    - It's important to ensure there are that many sounds in the content folder under that filename (default format for naming is "filename0").
 					
 					- The functions for playing a sound choose one at random from the array. For instance, calling the static function PlayerShoot() will choose a sound from the playerShoot array and play it.
  */
@@ -27,9 +27,17 @@ namespace CandyJam
     class SoundLibrary
     {
         private static ContentManager content;
+
         private static SoundEffect music;
         private static SoundEffectInstance musicInstance;
+
         private static SoundEffect[] playerShoot;
+        private static SoundEffect[] axeHit;
+        private static SoundEffect[] jump;
+        private static SoundEffect[] playerDamaged;
+        private static SoundEffect[] playerDie;
+        private static SoundEffect[] candyAlive;
+        private static SoundEffect[] candyDead;
         private static SoundEffect[] roar;
 
         private SoundLibrary()
@@ -43,7 +51,13 @@ namespace CandyJam
             music = contentManager.Load<SoundEffect>("music");
             musicInstance = music.CreateInstance();
 
-            playerShoot = LoadSound("player_shoot", 2);
+            playerShoot = LoadSound("player_shoot", 3);
+            axeHit = LoadSound("axe_hit", 3);
+            jump = LoadSound("jump", 1);
+            playerDamaged = LoadSound("player_damaged", 1);
+            playerDie = LoadSound("player_die", 1);
+            candyAlive = LoadSound("candy_alive", 3);
+            candyDead = LoadSound("candy_die", 1);
             roar = LoadSound("roar", 1);
         }
 
@@ -66,6 +80,39 @@ namespace CandyJam
         public static void Roar()
         {
             roar[0].Play();
+        }
+
+        public static void Jump()
+        {
+            jump[0].Play();
+        }
+
+        public static void PlayerDamaged()
+        {
+            playerDamaged[0].Play();
+        }
+
+        public static void PlayerDie()
+        {
+            playerDie[0].Play();
+        }
+
+        public static void AxeHit()
+        {
+            Random rng = new Random();
+            axeHit[rng.Next(axeHit.Length)].Play();
+        }
+
+        public static void CandyAlive()
+        {
+            Random rng = new Random();
+            candyAlive[rng.Next(candyAlive.Length)].Play();
+        }
+
+        public static void CandyDie()
+        {
+            Random rng = new Random();
+            candyDead[rng.Next(candyDead.Length)].Play();
         }
 
         public static void MusicStart()

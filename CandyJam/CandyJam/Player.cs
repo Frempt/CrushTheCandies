@@ -99,6 +99,12 @@ namespace CandyJam
             }
         }
 
+        new public void Jump()
+        {
+            base.Jump();
+            SoundLibrary.Jump();
+        }
+
         public int GetLives()
         {
             return lives;
@@ -111,7 +117,12 @@ namespace CandyJam
 
             if (lives <= 0)
             {
+                SoundLibrary.PlayerDie();
                 SetAnimationState(PlayerAnimationState.DYING);
+            }
+            else
+            {
+                SoundLibrary.PlayerDamaged();
             }
         }
 

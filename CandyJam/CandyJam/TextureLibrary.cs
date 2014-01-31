@@ -22,7 +22,7 @@ namespace CandyJam
         public static Texture2D bulletTexture;
         public static Texture2D laserTexture;
         public static Texture2D platformTexture;
-        public static Texture2D enemyTexture;
+        public static Texture2D[] enemyTexture;
         public static Texture2D backgroundTexture;
         public static Texture2D pickupTexture;
 
@@ -34,11 +34,14 @@ namespace CandyJam
 
         public static void LoadTextures(ContentManager content)
         {
+            enemyTexture = new Texture2D[2];
+
             playerTexture = content.Load<Texture2D>("player");
             bulletTexture = content.Load<Texture2D>("bullet");
             laserTexture = content.Load<Texture2D>("laser");
             platformTexture = content.Load<Texture2D>("platform");
-            enemyTexture = content.Load<Texture2D>("enemy");
+            enemyTexture[0] = content.Load<Texture2D>("enemy");
+            enemyTexture[1] = content.Load<Texture2D>("enemy2");
             backgroundTexture = content.Load<Texture2D>("background");
             pickupTexture = content.Load<Texture2D>("pickup");
 

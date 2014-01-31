@@ -94,29 +94,46 @@ namespace CandyJam
 
             EnemySpawner.WaveStart(enemies, GraphicsDevice.Viewport, wave, initialSpawnCount);
 
+            //left platforms
             Platform platform = new Platform(TextureLibrary.platformTexture, 1);
-            platform.MoveTo(GraphicsDevice.Viewport.Width / 8, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
+            platform.MoveTo(GraphicsDevice.Viewport.Width / 10, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
             platforms.Add(platform);
 
             Platform platform2 = new Platform(TextureLibrary.platformTexture, 1);
-            platform2.MoveTo(GraphicsDevice.Viewport.Width / 8, GraphicsDevice.Viewport.Height / 2);
+            platform2.MoveTo(GraphicsDevice.Viewport.Width / 10, GraphicsDevice.Viewport.Height / 4);
             platforms.Add(platform2);
 
-            Platform platform3 = new Platform(TextureLibrary.platformTexture, 2);
-            platform3.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 3);
+            //left center platforms
+            Platform platform3 = new Platform(TextureLibrary.platformTexture, 1);
+            platform3.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 5, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 3);
             platforms.Add(platform3);
 
-            Platform platform4 = new Platform(TextureLibrary.platformTexture, 2);
-            platform4.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 3);
+            Platform platform4 = new Platform(TextureLibrary.platformTexture, 1);
+            platform4.MoveTo(GraphicsDevice.Viewport.Width / 2 - GraphicsDevice.Viewport.Width / 5, GraphicsDevice.Viewport.Height / 3);
             platforms.Add(platform4);
 
+            //right platforms
             Platform platform5 = new Platform(TextureLibrary.platformTexture, 1);
-            platform5.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
+            platform5.MoveTo((GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 10) - (platform5.GetRect().Width), GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 4);
             platforms.Add(platform5);
 
             Platform platform6 = new Platform(TextureLibrary.platformTexture, 1);
-            platform6.MoveTo(GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 6, GraphicsDevice.Viewport.Height / 2);
+            platform6.MoveTo((GraphicsDevice.Viewport.Width - GraphicsDevice.Viewport.Width / 10) - (platform6.GetRect().Width), GraphicsDevice.Viewport.Height / 4);
             platforms.Add(platform6);
+
+            //right center platforms
+            Platform platform7 = new Platform(TextureLibrary.platformTexture, 1);
+            platform7.MoveTo((GraphicsDevice.Viewport.Width / 2 + GraphicsDevice.Viewport.Width / 5) - (platform7.GetRect().Width), GraphicsDevice.Viewport.Height - GraphicsDevice.Viewport.Height / 3);
+            platforms.Add(platform7);
+
+            Platform platform8 = new Platform(TextureLibrary.platformTexture, 1);
+            platform8.MoveTo((GraphicsDevice.Viewport.Width / 2 + GraphicsDevice.Viewport.Width / 5) - (platform8.GetRect().Width), GraphicsDevice.Viewport.Height / 3);
+            platforms.Add(platform8);
+
+            //center platform
+            Platform platform9 = new Platform(TextureLibrary.platformTexture, 2);
+            platform9.MoveTo((GraphicsDevice.Viewport.Width / 2) - (platform9.GetRect().Width / 2), GraphicsDevice.Viewport.Height / 2);
+            platforms.Add(platform9);
 
             waveDelayTimer = 0.0f;
             wave = 1;
@@ -291,6 +308,7 @@ namespace CandyJam
                     //if the bullet is done, it is destroyed
                     if (bullet.IsDone())
                     {
+                        SoundLibrary.AxeHit();
                         bullets.Remove(bullet);
                         bullet = null;
                     }
@@ -435,7 +453,7 @@ namespace CandyJam
                 //draw UI objects
                 spriteBatch.DrawString(font, "Lives : " + player.GetLives(), new Vector2(10.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
                 spriteBatch.DrawString(font, "Wave : " + wave, new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
-                spriteBatch.DrawString(font, "Enemies Remaining : " + ((enemyTarget * wave) - player.GetEnemiesKilled()), new Vector2(GraphicsDevice.Viewport.Width - 300.0f, 100.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
+                spriteBatch.DrawString(font, "Enemies Remaining : " + ((enemyTarget * wave) - player.GetEnemiesKilled()), new Vector2(GraphicsDevice.Viewport.Width /2, 10.0f), Color.Red, 0.0f, Vector2.Zero, (float)(GraphicsDevice.Viewport.Width / 600), SpriteEffects.None, 0.0f);
 
                 spriteBatch.End();
             }
